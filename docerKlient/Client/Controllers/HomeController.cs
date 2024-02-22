@@ -1,3 +1,4 @@
+using Client.db;
 using Client.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -15,7 +16,7 @@ namespace Client.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            return View(ProductContext.products);
         }
 
         public IActionResult Privacy()

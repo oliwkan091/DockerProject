@@ -1,12 +1,11 @@
-﻿using Client.Models;
+﻿using Server.Models;
 
-namespace Client.db
+namespace Server.db
 {
     public static class ProductContext
     {
         public static readonly List<Product> products = new List<Product>()
         {
-            //TODO Delete
              new Product()
                 {
                     Name = "IPhone X",

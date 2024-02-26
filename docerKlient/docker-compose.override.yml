@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  server:
+    container_name: server
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - "DatabaseSettings__ConnectionString=mongodb://productsDb:27017"
+    ports:
+      - "8000:8080"
+    depends_on:
+      - productsDb
+
+  client:
+    container_name: client
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - "ServerUrl=http://host.docker.internal:8000/"
+    depends_on:
+      - productsDb
+    ports:
+      - "8001:8080"
+
+  productsDb:
+    container_name: productsDb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/site:/data/db
+

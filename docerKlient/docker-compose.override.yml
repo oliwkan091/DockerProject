@@ -16,6 +16,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - "ServerUrl=http://host.docker.internal:8000/"
+      # nie dzia³a
+      # - "ServerUrl=http://server"
     depends_on:
       - productsDb
     ports:

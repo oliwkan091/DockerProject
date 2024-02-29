@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+# Typ zasobu 
+kind: Deployment
+metadata:
+  name: client-deployment
+  labels:
+    app: client
+spec:
+  # Ilość pod'ów jakie będą stworzone 
+  replicas: 1
+  selector:
+    matchLabels:
+      # To jest  label po którym Kubernetens szuka pod'ów i nadaje ip. Dodatkowo nazwy te muszą się zgadzać w deployment'cie poniżej
+      app: client
+      # Dane do utworzenia obrazu podczas deployment'u
+  template:
+    metadata:
+      labels:
+      # Musi być takie samo ja app powyżej
+        app: client
+    spec:
+      containers:
+      - name: client
+        # Nazwa utworzonego taga
+        #Jeżeli istnieje image o podanym tagu to zawsze zostanie użyty on nawet jeżeli dostępna jest nowsza wersja
+        image: kbcyyohhh7cqjkzbcpaa/client_kub:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        # Environment variables 
+        env: 
+        # Te same dane co w docker-compose.override.yml
+          - name: ASPNETCORE_ENVIRONMENT
+            value: Development
+          - name: serverUrl
+            # Stawianie połączenia do bazy "mongo-service" to nazwa serwisu mongo
+            # value: mongodb://username:password@mongo-service:27017
+            # To samo za pomocą config map
+            valueFrom:
+              configMapKeyRef:
+                name: server-configmap
+                key: connection_string
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+#server-service.yaml
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-service
+spec:
+ # Podstawowa wartość to clusterIp - oznacza to że dane ip jest dostępne tylko w danym klastrze
+ # NodePort oznacza że ip będzie widoczne też poza klastrem np w przeglądarce
+ # LoadBalancer Jeżeli dostęp do Ip ma mieć też połączenie spoza node'a. Do działania laodbalancera trzeba stworzyć konfigurację znajdującą się ponad nodem, inaczej nie będzie się dało z nim połączyć
+  type: NodePort
+  selector:
+    app: client
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8080
+      # Zaleca się  by port w Kubernetesie zaczynał się od wartości 31000, maksymalna wartość to 65535
+      nodePort: 31001

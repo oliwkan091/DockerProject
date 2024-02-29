@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+# Typ zasobu 
+kind: Deployment
+metadata:
+  name: mongo-deployment
+  labels:
+    app: mongodb
+spec:
+  # Ilość pod'ów jakie będą stworzone 
+  replicas: 1
+  selector:
+    matchLabels:
+      # To jest  label po którym Kubernetens szuka pod'ów i nadaje ip. Dodatkowo nazwy te muszą się zgadzać w deployment'cie poniżej
+      app: mongodb
+      # Dane do utworzenia obrazu podczas deployment'u
+  template:
+    metadata:
+      labels:
+      # Musi być takie samo ja app powyżej
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        # Environment variables 
+        env: 
+        #Nazwa zmiennej definiowana przez bazę mongo
+          - name: MONGO_INITDB_ROOT_USERNAME
+            # Określenie że wartość zostanie wzięta z innego miejsca
+            valueFrom:
+              secretKeyRef:
+                # Nazwa pliku
+                name: mongo-secret
+                # Nazwa zmiennej w pliku
+                key: mongo-root-username                  
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: mongo-root-password
+
+#Rozdziela skrypt tak jak by to były dwa osobne.
+# Poniżej konfiguracja serwisu, ponieważ będzie tworzony tylko dla tego kontenera to nie ma sensu go rozdzielać 
+#mongo-service.yaml
+---
+
+apiVersion: v1
+# Informacja o tym że jest to plik serwisu
+kind: Service
+metadata:
+  # Nazwa serwisu
+  name: mongo-service
+spec:
+  selector:
+    # Nazwa do której łączy się serwis
+    app: mongodb
+  ports:
+    - protocol: TCP
+      # Port wewnątrz kontenera 
+      port: 27017
+      # Port na zewnątrz
+      targetPort: 27017

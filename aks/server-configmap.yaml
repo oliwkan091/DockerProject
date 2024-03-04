@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-configmap
+data:
+  # Nie ma już forward więc nie potrzeba definiować portu
+  # connection_string: http://server-service:8000
+  connection_string: http://server-service

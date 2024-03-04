@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+  labels:
+    app: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+      - name: server
+        # Trzeba zmienić lokalizację i wersję tak by pasowała do przesłanej 
+        image: dockeraot695.azurecr.io/server:v1
+        imagePullPolicy: IfNotPresent
+        # Dodać lokalizację sekretu
+        ports:
+        - containerPort: 8080
+        env: 
+          - name: ASPNETCORE_ENVIRONMENT
+            value: Development
+          - name: DatabaseSettings__ConnectionString
+            valueFrom:
+              configMapKeyRef:
+                name: mongo-configmap
+                key: connection_string
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+      imagePullSecrets:
+      - name: acr-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-service
+spec:
+  # Ponieważ wszystko będzie siedzieć w chmurze w kontenerze to można pozostać w ClusterIp
+  # type: NodePort
+  selector:
+    app: server
+  ports:
+    - protocol: TCP
+      port: 8080
+      # Target port to port forward który przenosił port kontenera na zewnątrz więc tu nie będzie potrzbny
+      # targetPort: 8080
+      # Node nie ma już 
+      # nodePort: 31000

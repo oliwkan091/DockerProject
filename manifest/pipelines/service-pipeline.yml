@@ -1,0 +1,87 @@
+
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'e2bd5050-0b04-449c-8cd9-9367bbf7b47e'
+  imageRepository: 'shoppingapi'
+  containerRegistry: 'shoppingacr.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+  # Sekret do pobierania obrazów, ten sam który został stworzony podczas konfiguracji Kubernetens'a lokalnie
+  imagePullSecret: 'shoppingacr20662ab5-auth'
+  buildContext: $(Build.SourcesDirectory)/Shopping
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:  
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+    # Połączenie między taskami. Zawsze kiedy kończy się jeden task a zaczyna kolejny pomiedzy nimi jest upload 
+      # który zapisuje konfigurację wyjściową poprzedniego i jest czytane prez kolejny. W tym przypadku pomiędzy build a deployment 
+      # upload to nazwa pliku lub folderu
+      # Takie podejście pozwala na zbudowanie kontenera w jednym miejscu deploy w drugim 
+    - upload: manifests
+    # Artifact to nazwa referencji, nazwy jaka będzie używana poniżej do referencji do pliku 
+      artifact: manifests
+
+- stage: Deploy
+  displayName: Deploy stage
+  # Nie zostanie wykonany bez Build 
+  dependsOn: Build
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'aspnetrunrundevops.default'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # W pierwszej części tworzy sekret (bardziej go pobiera)
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: createSecret
+              secretName: $(imagePullSecret)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+          # W drugiej deploy'uje 
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/server.yml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)

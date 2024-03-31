@@ -1,50 +1,50 @@
-# # Docker
-# # Build and push an image to Azure Container Registry
-# # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
-# # Posiada określenie triggerów które
-# trigger:
-# - main
+# Posiada określenie triggerów które
+trigger:
+- main
 
-# # Zasoby na których pracuje pipeline
-# # W tym  przypadku zasoby które zostały określone w konfiguracji
-# resources:
-# - repo: self
+# Zasoby na których pracuje pipeline
+# W tym  przypadku zasoby które zostały określone w konfiguracji
+resources:
+- repo: self
 
-# variables:
-#   # Container registry service connection established during pipeline creation
-#   # Id połączenie do platformy, służy do autoryzacji 
-#   dockerRegistryServiceConnection: 'ce732a1d-1ce9-4d21-a79c-5a789c6862dc'
-#   # Nazwa repo w ACR nie github, jeżeli takie nie istnieje to zostanie stworzone 
-#   imageRepository: 'aspnetrunrundevops'
-#   containerRegistry: 'shoppingacr.azurecr.io'
-#   # Ścieżka do pliku dockerfile
-#   dockerfilePath: '$(Build.SourcesDirectory)/Shopping/Shopping.API/Dockerfile'
-#   # Nazwa i wersji  oprogramowania
-#   tag: '$(Build.BuildId)'
-#   # Agent VM image name
-#   vmImageName: 'ubuntu-latest'
+variables:
+  # Container registry service connection established during pipeline creation
+  # Id połączenie do platformy, służy do autoryzacji 
+  dockerRegistryServiceConnection: 'ce732a1d-1ce9-4d21-a79c-5a789c6862dc'
+  # Nazwa repo w ACR nie github, jeżeli takie nie istnieje to zostanie stworzone 
+  imageRepository: 'DockerProject'
+  containerRegistry: 'dockeraot695.azurecr.io'
+  # Ścieżka do pliku dockerfile
+  dockerfilePath: '$(Build.SourcesDirectory)/Server/Server.API/Dockerfile'
+  # Nazwa i wersji  oprogramowania
+  tag: '$(Build.BuildId)'
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
 
-# # Build and Deploy
-# stages:
-# - stage: Build
-#   displayName: Build and push stage
-#   jobs:  
-#   - job: Build
-#     displayName: Build
-#     pool:
-#       vmImage: $(vmImageName)
-#     steps:
-#     # Wbudowany task w azure dłużący do "Build and push stage", opisane w dokumentacji 
-#     - task: Docker@2
-#       displayName: Build and push an image to container registry
-#       # Argumenty
-#       inputs:
-#         command: buildAndPush
-#         repository: $(imageRepository)
-#         dockerfile: $(dockerfilePath)
-#         containerRegistry: $(dockerRegistryServiceConnection)
-#         # Dodaje ścieżkę do lokalizacji Dockerfile
-#         buildContext: $(Build.SourcesDirectory)/Shopping
-#         tags: |
-#           $(tag)
+# Build and Deploy
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:  
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    # Wbudowany task w azure dłużący do "Build and push stage", opisane w dokumentacji 
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      # Argumenty
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        # Dodaje ścieżkę do lokalizacji Dockerfile
+        buildContext: $(Build.SourcesDirectory)/Shopping
+        tags: |
+          $(tag)

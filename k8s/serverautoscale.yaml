@@ -1,0 +1,25 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: server-hpa
+spec:
+  maxReplicas: 10 # define max replica count
+  minReplicas: 1  # define min replica count
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: server-deployment # musi się zgadzać z nazwą pliku deployment'u
+  targetCPUUtilizationPercentage: 50 # target CPU utilization
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: client-hpa
+spec:
+  maxReplicas: 10 # define max replica count
+  minReplicas: 1  # define min replica count
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: client-deployment # musi się zgadzać z nazwą pliku deployment'u
+  targetCPUUtilizationPercentage: 50 # target CPU utilization

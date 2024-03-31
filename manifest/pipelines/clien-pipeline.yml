@@ -10,10 +10,10 @@ trigger:
       - main
     paths:
       include:
-      # Jeżeli dotyczy dowolnej zmiany w projekcie server
-      - Server/server/*
+      # Jeżeli dotyczy dowolnej zmiany w projekcie client
+      - Client/client/*
       # Jeżeli dotyczy dolnej zmiany w podanym pliku manifest
-      - manifest/server.yaml
+      - manifest/client.yaml
 
 resources:
 - repo: self
@@ -28,7 +28,7 @@ variables:
   tag: '$(Build.BuildId)'
   # Sekret do pobierania obrazów, ten sam który został stworzony podczas konfiguracji Kubernetens'a lokalnie
   imagePullSecret: 'shoppingacr20662ab5-auth'
-  buildContext: $(Build.SourcesDirectory)/Server
+  buildContext: $(Build.SourcesDirectory)/Client
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -89,7 +89,7 @@ stages:
             inputs:
               action: deploy
               manifests: |
-                $(Pipeline.Workspace)/manifests/server.yml
+                $(Pipeline.Workspace)/manifests/client.yml
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |
